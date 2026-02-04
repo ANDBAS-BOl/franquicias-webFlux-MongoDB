@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Formato de consola: fecha, nivel, logger, mensaje -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- Salida a consola -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Nivel por defecto: INFO. Ajustar en desarrollo con logging.level.*=DEBUG si se desea -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- Nivel de la aplicación y Spring para trazas útiles -->
+    <logger name="com.seti.andres" level="INFO"/>
+    <logger name="org.springframework.data.mongodb" level="INFO"/>
+    <logger name="reactor.netty" level="INFO"/>
+</configuration>
