@@ -26,9 +26,6 @@ import static org.mockito.Mockito.when;
 
 /**
  * Pruebas unitarias del servicio de casos de uso (FranchiseUseCaseService).
- * Cumple Etapa 4 del plan: cobertura > 60%, deseable ≥ 80%.
- * Verifica flujos reactivos (map, flatMap, switchIfEmpty, onErrorResume) y manejo de errores.
- * Alineado con PruebaNequi: "incluya pruebas unitarias, asegúrese de obtener una cobertura mayor al 60% deseable 80%".
  */
 @ExtendWith(MockitoExtension.class)
 class FranchiseUseCaseServiceTest {

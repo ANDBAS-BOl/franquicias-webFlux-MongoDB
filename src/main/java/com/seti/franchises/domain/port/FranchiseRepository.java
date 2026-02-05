@@ -7,7 +7,6 @@ import reactor.core.publisher.Mono;
 /**
  * Port (repository interface) for franchise persistence.
  * Dependency inversion: the domain defines the contract; infrastructure implements it.
- * All operations are reactive (Mono/Flux) as required by the technical test.
  */
 public interface FranchiseRepository {
 

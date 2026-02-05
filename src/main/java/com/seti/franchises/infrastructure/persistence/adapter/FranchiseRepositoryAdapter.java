@@ -13,7 +13,6 @@ import reactor.core.publisher.Mono;
 
 /**
  * Adapter that implements the domain port FranchiseRepository using ReactiveMongoRepository.
- * Uses reactive operators (map, flatMap) and aligns with onNext/onError/onComplete semantics.
  */
 @Slf4j
 @Component

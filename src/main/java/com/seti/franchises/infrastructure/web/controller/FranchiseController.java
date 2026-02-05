@@ -1,11 +1,7 @@
 package com.seti.franchises.infrastructure.web.controller;
 
 import com.seti.franchises.application.service.FranchiseUseCaseService;
-import com.seti.franchises.infrastructure.web.dto.request.AddBranchRequest;
-import com.seti.franchises.infrastructure.web.dto.request.AddFranchiseRequest;
-import com.seti.franchises.infrastructure.web.dto.request.AddProductRequest;
-import com.seti.franchises.infrastructure.web.dto.request.UpdateNameRequest;
-import com.seti.franchises.infrastructure.web.dto.request.UpdateStockRequest;
+import com.seti.franchises.infrastructure.web.dto.request.*;
 import com.seti.franchises.infrastructure.web.dto.response.BranchResponse;
 import com.seti.franchises.infrastructure.web.dto.response.FranchiseResponse;
 import com.seti.franchises.infrastructure.web.dto.response.ProductResponse;
@@ -28,14 +24,14 @@ import reactor.core.publisher.Mono;
 
 /**
  * Controlador REST para franquicias, sucursales y productos.
- * Requisitos funcionales (PruebaNequiAjustada.pdf):
  * 1. POST agregar franquicia
  * 2. POST agregar sucursal a una franquicia
  * 3. POST agregar producto a una sucursal
  * 4. DELETE eliminar producto de una sucursal
  * 5. PATCH/PUT modificar stock de un producto
  * 6. GET producto con más stock por sucursal para una franquicia
- * Puntos extra: PUT actualizar nombre de franquicia, sucursal y producto.
+ * 7. PATCH/PUT actualizar el nombre actualizar nombre de franquicia, sucursal y producto
+ * 8. PATCH/PUT Borrado logico de productos.
  */
 @Tag(name = "Franquicias", description = "API de franquicias, sucursales y productos")
 @RestController
@@ -55,7 +51,7 @@ public class FranchiseController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<FranchiseResponse> addFranchise(@Valid @RequestBody AddFranchiseRequest request) {
-        return useCaseService.addFranchise(request.getName())
+        return useCaseService.addFranchise(request.name())
                 .map(apiMapper::toFranchiseResponse);
     }
 
@@ -71,7 +67,7 @@ public class FranchiseController {
     public Mono<BranchResponse> addBranch(
             @Parameter(description = "ID de la franquicia") @PathVariable String franchiseId,
             @Valid @RequestBody AddBranchRequest request) {
-        return useCaseService.addBranchToFranchise(franchiseId, request.getName())
+        return useCaseService.addBranchToFranchise(franchiseId, request.name())
                 .map(apiMapper::toBranchResponse);
     }
 
@@ -88,12 +84,12 @@ public class FranchiseController {
             @Parameter(description = "ID de la franquicia") @PathVariable String franchiseId,
             @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
             @Valid @RequestBody AddProductRequest request) {
-        Integer stock = request.getStockQuantity() != null ? request.getStockQuantity() : 0;
-        return useCaseService.addProductToBranch(franchiseId, branchId, request.getName(), stock)
+        Integer stock = request.stockQuantity() != null ? request.stockQuantity() : 0;
+        return useCaseService.addProductToBranch(franchiseId, branchId, request.name(), stock)
                 .map(apiMapper::toProductResponse);
     }
 
-    @Operation(summary = "Eliminar producto", description = "Elimina un producto de una sucursal")
+    @Operation(summary = "Eliminar producto (físico)", description = "Elimina físicamente un producto de una sucursal. En producción se recomienda usar borrado lógico (PATCH .../disable).")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Producto eliminado"),
             @ApiResponse(responseCode = "404", description = "Franquicia, sucursal o producto no encontrado")
@@ -105,6 +101,21 @@ public class FranchiseController {
             @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
             @Parameter(description = "ID del producto") @PathVariable String productId) {
         return useCaseService.deleteProductFromBranch(franchiseId, branchId, productId);
+    }
+
+    @Operation(summary = "Deshabilitar producto (borrado lógico)", description = "Marca el producto como deshabilitado (enabled=false). Recomendado en entornos productivos: preserva datos, auditoría y posibilidad de recuperación.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Producto deshabilitado",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ProductResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Franquicia, sucursal o producto no encontrado")
+    })
+    @PatchMapping(value = "/{franchiseId}/branches/{branchId}/products/{productId}/disable", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ProductResponse> disableProduct(
+            @Parameter(description = "ID de la franquicia") @PathVariable String franchiseId,
+            @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
+            @Parameter(description = "ID del producto") @PathVariable String productId) {
+        return useCaseService.disableProductInBranch(franchiseId, branchId, productId)
+                .map(apiMapper::toProductResponse);
     }
 
     @Operation(summary = "Modificar stock", description = "Actualiza la cantidad en stock de un producto")
@@ -120,7 +131,7 @@ public class FranchiseController {
             @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
             @Parameter(description = "ID del producto") @PathVariable String productId,
             @Valid @RequestBody UpdateStockRequest request) {
-        return useCaseService.updateProductStock(franchiseId, branchId, productId, request.getStockQuantity())
+        return useCaseService.updateProductStock(franchiseId, branchId, productId, request.stockQuantity())
                 .map(apiMapper::toProductResponse);
     }
 
@@ -137,8 +148,6 @@ public class FranchiseController {
                 .map(apiMapper::toProductWithBranchResponse);
     }
 
-    // --- Puntos extra: actualizar nombres ---
-
     @Operation(summary = "Actualizar nombre de franquicia", description = "Modifica el nombre de una franquicia (punto extra)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Nombre actualizado",
@@ -150,7 +159,7 @@ public class FranchiseController {
     public Mono<FranchiseResponse> updateFranchiseName(
             @Parameter(description = "ID de la franquicia") @PathVariable String franchiseId,
             @Valid @RequestBody UpdateNameRequest request) {
-        return useCaseService.updateFranchiseName(franchiseId, request.getName())
+        return useCaseService.updateFranchiseName(franchiseId, request.name())
                 .map(apiMapper::toFranchiseResponse);
     }
 
@@ -166,7 +175,7 @@ public class FranchiseController {
             @Parameter(description = "ID de la franquicia") @PathVariable String franchiseId,
             @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
             @Valid @RequestBody UpdateNameRequest request) {
-        return useCaseService.updateBranchName(franchiseId, branchId, request.getName())
+        return useCaseService.updateBranchName(franchiseId, branchId, request.name())
                 .map(apiMapper::toBranchResponse);
     }
 
@@ -183,7 +192,7 @@ public class FranchiseController {
             @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
             @Parameter(description = "ID del producto") @PathVariable String productId,
             @Valid @RequestBody UpdateNameRequest request) {
-        return useCaseService.updateProductName(franchiseId, branchId, productId, request.getName())
+        return useCaseService.updateProductName(franchiseId, branchId, productId, request.name())
                 .map(apiMapper::toProductResponse);
     }
 

@@ -20,45 +20,32 @@ public class ApiMapper {
 
     public FranchiseResponse toFranchiseResponse(Franchise franchise) {
         if (franchise == null) return null;
-        return FranchiseResponse.builder()
-                .id(franchise.getId())
-                .name(franchise.getName())
-                .branches(Optional.ofNullable(franchise.getBranches())
-                        .orElse(Collections.emptyList())
-                        .stream()
-                        .map(this::toBranchResponse)
-                        .collect(Collectors.toList()))
-                .build();
+        List<BranchResponse> branches = Optional.ofNullable(franchise.getBranches())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(this::toBranchResponse)
+                .collect(Collectors.toList());
+        return new FranchiseResponse(franchise.getId(), franchise.getName(), branches);
     }
 
     public BranchResponse toBranchResponse(Branch branch) {
         if (branch == null) return null;
-        return BranchResponse.builder()
-                .id(branch.getId())
-                .name(branch.getName())
-                .products(Optional.ofNullable(branch.getProducts())
-                        .orElse(Collections.emptyList())
-                        .stream()
-                        .map(this::toProductResponse)
-                        .collect(Collectors.toList()))
-                .build();
+        List<ProductResponse> products = Optional.ofNullable(branch.getProducts())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(this::toProductResponse)
+                .collect(Collectors.toList());
+        return new BranchResponse(branch.getId(), branch.getName(), products);
     }
 
     public ProductResponse toProductResponse(Product product) {
         if (product == null) return null;
-        return ProductResponse.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .stockQuantity(product.getStockQuantity())
-                .build();
+        boolean enabled = product.getEnabled() != null ? product.getEnabled() : true;
+        return new ProductResponse(product.getId(), product.getName(), product.getStockQuantity(), enabled);
     }
 
     public ProductWithBranchResponse toProductWithBranchResponse(FranchiseUseCaseService.ProductWithBranchDto dto) {
         if (dto == null) return null;
-        return ProductWithBranchResponse.builder()
-                .branchId(dto.getBranchId())
-                .branchName(dto.getBranchName())
-                .product(toProductResponse(dto.getProduct()))
-                .build();
+        return new ProductWithBranchResponse(dto.getBranchId(), dto.getBranchName(), toProductResponse(dto.getProduct()));
     }
 }

@@ -10,7 +10,6 @@ import java.util.List;
 
 /**
  * Domain entity representing a franchise (franquicia).
- * Aligns with the requirement: "Una franquicia se compone por un nombre y un listado de sucursales."
  */
 @Data
 @Builder

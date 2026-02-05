@@ -29,9 +29,6 @@ import static org.mockito.Mockito.when;
 
 /**
  * Pruebas del controlador REST (FranchiseController) con WebTestClient.
- * Cumple Etapa 4 del plan: "Probar controladores con WebTestClient (tests slice)".
- * Verifica endpoints RESTful, códigos HTTP (201, 200, 204, 404, 400) y manejo de errores.
- * Alineado con PruebaNequi: "haga un uso correcto de exposición de APIs usando Restful".
  */
 @WebFluxTest(FranchiseController.class)
 @Import(GlobalExceptionHandler.class)
@@ -54,7 +51,7 @@ class FranchiseControllerTest {
     @DisplayName("POST /api/v1/franchises - agregar franquicia retorna 201")
     void addFranchise_returns201() {
         Franchise franchise = Franchise.builder().id(FRANCHISE_ID).name("Franquicia Norte").branches(List.of()).build();
-        FranchiseResponse response = FranchiseResponse.builder().id(FRANCHISE_ID).name("Franquicia Norte").branches(List.of()).build();
+        FranchiseResponse response = new FranchiseResponse(FRANCHISE_ID, "Franquicia Norte", List.of());
         when(useCaseService.addFranchise("Franquicia Norte")).thenReturn(Mono.just(franchise));
         when(apiMapper.toFranchiseResponse(franchise)).thenReturn(response);
 
@@ -84,7 +81,7 @@ class FranchiseControllerTest {
     @DisplayName("POST /api/v1/franchises/{franchiseId}/branches - agregar sucursal retorna 201")
     void addBranch_returns201() {
         Branch branch = Branch.builder().id(BRANCH_ID).name("Sucursal Centro").products(List.of()).build();
-        BranchResponse response = BranchResponse.builder().id(BRANCH_ID).name("Sucursal Centro").products(List.of()).build();
+        BranchResponse response = new BranchResponse(BRANCH_ID, "Sucursal Centro", List.of());
         when(useCaseService.addBranchToFranchise(FRANCHISE_ID, "Sucursal Centro")).thenReturn(Mono.just(branch));
         when(apiMapper.toBranchResponse(branch)).thenReturn(response);
 
@@ -117,7 +114,7 @@ class FranchiseControllerTest {
     @DisplayName("POST /api/v1/franchises/{franchiseId}/branches/{branchId}/products - agregar producto retorna 201")
     void addProduct_returns201() {
         Product product = Product.builder().id(PRODUCT_ID).name("Producto A").stockQuantity(10).build();
-        ProductResponse response = ProductResponse.builder().id(PRODUCT_ID).name("Producto A").stockQuantity(10).build();
+        ProductResponse response = new ProductResponse(PRODUCT_ID, "Producto A", 10, true);
         when(useCaseService.addProductToBranch(eq(FRANCHISE_ID), eq(BRANCH_ID), eq("Producto A"), eq(10)))
                 .thenReturn(Mono.just(product));
         when(apiMapper.toProductResponse(product)).thenReturn(response);
@@ -160,10 +157,28 @@ class FranchiseControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH .../products/{productId}/disable - borrado lógico retorna 200")
+    void disableProduct_returns200() {
+        Product disabled = Product.builder().id(PRODUCT_ID).name("Producto A").stockQuantity(10).enabled(false).build();
+        ProductResponse response = new ProductResponse(PRODUCT_ID, "Producto A", 10, false);
+        when(useCaseService.disableProductInBranch(FRANCHISE_ID, BRANCH_ID, PRODUCT_ID)).thenReturn(Mono.just(disabled));
+        when(apiMapper.toProductResponse(disabled)).thenReturn(response);
+
+        webTestClient.patch()
+                .uri("/api/v1/franchises/{franchiseId}/branches/{branchId}/products/{productId}/disable",
+                        FRANCHISE_ID, BRANCH_ID, PRODUCT_ID)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo(PRODUCT_ID)
+                .jsonPath("$.enabled").isEqualTo(false);
+    }
+
+    @Test
     @DisplayName("PATCH .../products/{productId}/stock - modificar stock retorna 200")
     void updateProductStock_returns200() {
         Product product = Product.builder().id(PRODUCT_ID).name("Producto A").stockQuantity(20).build();
-        ProductResponse response = ProductResponse.builder().id(PRODUCT_ID).name("Producto A").stockQuantity(20).build();
+        ProductResponse response = new ProductResponse(PRODUCT_ID, "Producto A", 20, true);
         when(useCaseService.updateProductStock(FRANCHISE_ID, BRANCH_ID, PRODUCT_ID, 20)).thenReturn(Mono.just(product));
         when(apiMapper.toProductResponse(product)).thenReturn(response);
 
@@ -187,11 +202,8 @@ class FranchiseControllerTest {
                 .branchName("Sucursal Centro")
                 .product(product)
                 .build();
-        ProductWithBranchResponse response = ProductWithBranchResponse.builder()
-                .branchId(BRANCH_ID)
-                .branchName("Sucursal Centro")
-                .product(ProductResponse.builder().id(PRODUCT_ID).name("Producto A").stockQuantity(15).build())
-                .build();
+        ProductWithBranchResponse response = new ProductWithBranchResponse(BRANCH_ID, "Sucursal Centro",
+                new ProductResponse(PRODUCT_ID, "Producto A", 15, true));
         when(useCaseService.getProductWithMostStockPerBranch(FRANCHISE_ID)).thenReturn(Flux.just(dto));
         when(apiMapper.toProductWithBranchResponse(dto)).thenReturn(response);
 
@@ -221,7 +233,7 @@ class FranchiseControllerTest {
     @DisplayName("PATCH .../name - actualizar nombre franquicia (punto extra) retorna 200")
     void updateFranchiseName_returns200() {
         Franchise franchise = Franchise.builder().id(FRANCHISE_ID).name("Nuevo Nombre").branches(List.of()).build();
-        FranchiseResponse response = FranchiseResponse.builder().id(FRANCHISE_ID).name("Nuevo Nombre").branches(List.of()).build();
+        FranchiseResponse response = new FranchiseResponse(FRANCHISE_ID, "Nuevo Nombre", List.of());
         when(useCaseService.updateFranchiseName(FRANCHISE_ID, "Nuevo Nombre")).thenReturn(Mono.just(franchise));
         when(apiMapper.toFranchiseResponse(franchise)).thenReturn(response);
 
@@ -239,7 +251,7 @@ class FranchiseControllerTest {
     @DisplayName("GET /api/v1/franchises - listar franquicias retorna 200")
     void listFranchises_returns200() {
         Franchise f = Franchise.builder().id(FRANCHISE_ID).name("F1").branches(List.of()).build();
-        FranchiseResponse r = FranchiseResponse.builder().id(FRANCHISE_ID).name("F1").branches(List.of()).build();
+        FranchiseResponse r = new FranchiseResponse(FRANCHISE_ID, "F1", List.of());
         when(useCaseService.findAll()).thenReturn(Flux.just(f));
         when(apiMapper.toFranchiseResponse(any(Franchise.class))).thenReturn(r);
 
@@ -256,7 +268,7 @@ class FranchiseControllerTest {
     @DisplayName("GET /api/v1/franchises/{franchiseId} - obtener franquicia retorna 200")
     void getFranchise_returns200() {
         Franchise franchise = Franchise.builder().id(FRANCHISE_ID).name("Franquicia").branches(List.of()).build();
-        FranchiseResponse response = FranchiseResponse.builder().id(FRANCHISE_ID).name("Franquicia").branches(List.of()).build();
+        FranchiseResponse response = new FranchiseResponse(FRANCHISE_ID, "Franquicia", List.of());
         when(useCaseService.findById(FRANCHISE_ID)).thenReturn(Mono.just(franchise));
         when(apiMapper.toFranchiseResponse(franchise)).thenReturn(response);
 

@@ -13,7 +13,6 @@ import reactor.core.publisher.Mono;
 
 /**
  * Manejador global de excepciones para respuestas REST adecuadas (404, 400, 409).
- * Alinea con el plan: "Manejo de errores con onError y respuestas adecuadas (404, 400, 409)".
  */
 @Slf4j
 @RestControllerAdvice
@@ -26,10 +25,7 @@ public class GlobalExceptionHandler {
         log.warn("Recurso no encontrado: {}", ex.getMessage());
         return Mono.just(ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(ErrorResponse.builder()
-                        .status(HttpStatus.NOT_FOUND.value())
-                        .message(ex.getMessage())
-                        .build()));
+                .body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage())));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -39,10 +35,7 @@ public class GlobalExceptionHandler {
         log.warn("Petición inválida: {}", ex.getMessage());
         return Mono.just(ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.builder()
-                        .status(HttpStatus.BAD_REQUEST.value())
-                        .message(ex.getMessage())
-                        .build()));
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage())));
     }
 
     @ExceptionHandler(WebExchangeBindException.class)
@@ -54,9 +47,6 @@ public class GlobalExceptionHandler {
         log.warn("Validación fallida: {}", message);
         return Mono.just(ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.builder()
-                        .status(HttpStatus.BAD_REQUEST.value())
-                        .message(message)
-                        .build()));
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message)));
     }
 }

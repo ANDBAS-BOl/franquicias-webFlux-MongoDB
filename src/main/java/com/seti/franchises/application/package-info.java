@@ -1,5 +1,5 @@
 /**
- * Capa de aplicación / casos de uso (Arquitectura Hexagonal).
+ * Capa de aplicación / casos de uso.
  * <p>
  * Contiene los servicios que orquestan los flujos de negocio, implementando
  * los casos de uso. Dependen solo del dominio (puertos) y delegan la
