@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * Domain entity representing a product offered in a branch.
- * Aligns with the requirement: "Un producto se compone de un nombre y una cantidad de stock."
  */
 @Data
 @Builder
@@ -18,4 +17,11 @@ public class Product {
     private String id;
     private String name;
     private Integer stockQuantity;
+
+    /**
+     * Indica si el producto está habilitado. Por defecto true.
+     * false = borrado lógico (soft delete). Recomendado en entornos productivos.
+     */
+    @Builder.Default
+    private Boolean enabled = true;
 }

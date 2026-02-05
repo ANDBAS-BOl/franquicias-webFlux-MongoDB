@@ -25,4 +25,11 @@ public class ProductDocument {
 
     @Field("stock_quantity")
     private Integer stockQuantity;
+
+    /**
+     * Indica si el producto está habilitado. Por defecto true (borrado lógico: false).
+     */
+    @Field("enabled")
+    @Builder.Default
+    private Boolean enabled = true;
 }

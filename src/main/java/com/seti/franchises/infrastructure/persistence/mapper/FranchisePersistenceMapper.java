@@ -88,6 +88,7 @@ public class FranchisePersistenceMapper {
                 .id(product.getId())
                 .name(product.getName())
                 .stockQuantity(product.getStockQuantity())
+                .enabled(product.getEnabled() != null ? product.getEnabled() : true)
                 .build();
     }
 
@@ -99,6 +100,7 @@ public class FranchisePersistenceMapper {
                 .id(document.getId())
                 .name(document.getName())
                 .stockQuantity(document.getStockQuantity())
+                .enabled(document.getEnabled() != null ? document.getEnabled() : true)
                 .build();
     }
 }

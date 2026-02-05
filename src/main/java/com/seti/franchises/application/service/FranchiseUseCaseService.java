@@ -20,8 +20,6 @@ import java.util.stream.Collectors;
 /**
  * Application service (use cases) for franchise operations.
  * Implements business logic using reactive operators: map, flatMap, switchIfEmpty, zip, onErrorResume.
- * Aligns with PruebaNequi: "Encadene la respuesta entre diferentes flujos usando operadores map, flatMap, switchIfEmpty, merge, zip"
- * and "Use correctamente las señales onNext, onError, onComplete".
  */
 @Slf4j
 @Service
@@ -108,6 +106,7 @@ public class FranchiseUseCaseService {
                             .id(UUID.randomUUID().toString())
                             .name(pname)
                             .stockQuantity(stock)
+                            .enabled(true)
                             .build();
                     List<Product> updatedProducts = Optional.ofNullable(branch.getProducts()).orElse(List.of()).stream()
                             .collect(Collectors.toList());
@@ -131,7 +130,49 @@ public class FranchiseUseCaseService {
     }
 
     /**
-     * Delete a product from a branch (DELETE eliminar producto de una sucursal).
+     * Logical delete (disable) a product in a branch. Sets enabled=false.
+     * Recommended in production: preserves data, allows audit and recovery.
+     */
+    public Mono<Product> disableProductInBranch(String franchiseId, String branchId, String productId) {
+        return Mono.justOrEmpty(franchiseId)
+                .flatMap(franchiseRepository::findById)
+                .switchIfEmpty(Mono.error(new NotFoundException("Franquicia no encontrada: " + franchiseId)))
+                .map(f -> {
+                    Branch branch = f.getBranches().stream().filter(b -> branchId.equals(b.getId())).findFirst().orElse(null);
+                    if (branch == null) {
+                        throw new NotFoundException("Sucursal no encontrada: " + branchId);
+                    }
+                    Product product = branch.getProducts().stream().filter(p -> productId.equals(p.getId())).findFirst().orElse(null);
+                    if (product == null) {
+                        throw new NotFoundException("Producto no encontrado: " + productId);
+                    }
+                    Product disabled = Product.builder()
+                            .id(product.getId())
+                            .name(product.getName())
+                            .stockQuantity(product.getStockQuantity())
+                            .enabled(false)
+                            .build();
+                    List<Product> updatedProducts = branch.getProducts().stream()
+                            .map(p -> p.getId().equals(productId) ? disabled : p)
+                            .collect(Collectors.toList());
+                    List<Branch> updatedBranches = f.getBranches().stream()
+                            .map(b -> b.getId().equals(branchId)
+                                    ? Branch.builder().id(branch.getId()).name(branch.getName()).products(updatedProducts).build()
+                                    : b)
+                            .collect(Collectors.toList());
+                    return Tuples.of(Franchise.builder()
+                            .id(f.getId())
+                            .name(f.getName())
+                            .branches(updatedBranches)
+                            .build(), disabled);
+                })
+                .flatMap(pair -> franchiseRepository.save(pair.getT1()).thenReturn(pair.getT2()))
+                .doOnNext(p -> log.info("Producto deshabilitado (borrado lógico): franchiseId={}, branchId={}, productId={}", franchiseId, branchId, productId))
+                .onErrorResume(NotFoundException.class, e -> Mono.error(e));
+    }
+
+    /**
+     * Delete a product from a branch (DELETE eliminar producto de una sucursal). Physical delete.
      */
     public Mono<Void> deleteProductFromBranch(String franchiseId, String branchId, String productId) {
         return Mono.justOrEmpty(franchiseId)
@@ -180,10 +221,14 @@ public class FranchiseUseCaseService {
                             if (product == null) {
                                 throw new NotFoundException("Producto no encontrado: " + productId);
                             }
+                            if (Boolean.FALSE.equals(product.getEnabled())) {
+                                throw new NotFoundException("Producto deshabilitado (borrado lógico): " + productId);
+                            }
                             Product updatedProduct = Product.builder()
                                     .id(product.getId())
                                     .name(product.getName())
                                     .stockQuantity(stock)
+                                    .enabled(product.getEnabled())
                                     .build();
                             List<Product> updatedProducts = branch.getProducts().stream()
                                     .map(p -> p.getId().equals(productId) ? updatedProduct : p)
@@ -221,6 +266,7 @@ public class FranchiseUseCaseService {
                 .flatMapMany(franchise -> Flux.fromIterable(franchise.getBranches())
                         .map(branch -> {
                             Product maxProduct = branch.getProducts().stream()
+                                    .filter(p -> Boolean.TRUE.equals(p.getEnabled()))
                                     .max(Comparator.comparingInt(Product::getStockQuantity))
                                     .orElse(null);
                             return new ProductWithBranchDto(branch.getId(), branch.getName(), maxProduct);
@@ -308,10 +354,14 @@ public class FranchiseUseCaseService {
                             if (product == null) {
                                 throw new NotFoundException("Producto no encontrado: " + productId);
                             }
+                            if (Boolean.FALSE.equals(product.getEnabled())) {
+                                throw new NotFoundException("Producto deshabilitado (borrado lógico): " + productId);
+                            }
                             Product updatedProduct = Product.builder()
                                     .id(product.getId())
                                     .name(name.trim())
                                     .stockQuantity(product.getStockQuantity())
+                                    .enabled(product.getEnabled())
                                     .build();
                             List<Product> updatedProducts = branch.getProducts().stream()
                                     .map(p -> p.getId().equals(productId) ? updatedProduct : p)

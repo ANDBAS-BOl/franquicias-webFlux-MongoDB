@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Configuración de OpenAPI (Swagger) para documentar la API de franquicias.
- * Requisito del plan: "opcional: OpenAPI/Swagger con dependencia compatible con WebFlux".
  */
 @Configuration
 public class OpenApiConfig {
@@ -21,7 +20,7 @@ public class OpenApiConfig {
                         .title("API de Franquicias")
                         .version("1.0")
                         .description("API REST reactiva para gestionar franquicias, sucursales y productos. " +
-                                "Prueba técnica: Spring WebFlux + MongoDB + arquitectura hexagonal.")
+                                "Spring WebFlux + MongoDB + arquitectura hexagonal.")
                         .contact(new Contact()
                                 .name("API Franquicias"))
                         .license(new License().name("Sin licencia")));
