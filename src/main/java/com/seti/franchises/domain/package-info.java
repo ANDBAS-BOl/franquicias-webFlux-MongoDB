@@ -5,4 +5,4 @@
  * que definen contratos para repositorios y servicios. Esta capa NO depende
  * de frameworks ni de infraestructura.
  */
-package com.seti.andres.domain;
+package com.seti.franchises.domain;

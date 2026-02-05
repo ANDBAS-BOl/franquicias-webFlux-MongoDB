@@ -20,7 +20,7 @@
     </root>
 
     <!-- Nivel de la aplicación y Spring para trazas útiles -->
-    <logger name="com.seti.andres" level="INFO"/>
+    <logger name="com.seti.franchises" level="INFO"/>
     <logger name="org.springframework.data.mongodb" level="INFO"/>
     <logger name="reactor.netty" level="INFO"/>
 </configuration>
