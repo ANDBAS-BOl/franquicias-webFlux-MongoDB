@@ -41,7 +41,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-// Reporte de cobertura JaCoCo (objetivo > 60%, deseable >= 80%)
+// Reporte de cobertura JaCoCo 
 jacoco {
 	toolVersion = '0.8.11'
 }
