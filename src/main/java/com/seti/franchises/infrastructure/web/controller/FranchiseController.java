@@ -187,8 +187,6 @@ public class FranchiseController {
                 .map(apiMapper::toProductResponse);
     }
 
-    // --- Consultas opcionales ---
-
     @Operation(summary = "Obtener franquicia por ID", description = "Devuelve una franquicia con sus sucursales y productos")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Franquicia encontrada"),
