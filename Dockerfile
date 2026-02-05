@@ -1,11 +1,10 @@
 # =============================================================================
 # API Franquicias - Spring WebFlux + MongoDB
 # Dockerfile multi-stage: build con Gradle (Java 21) y etapa final con JRE 21.
-# Etapa 5 - Punto 1 del plan (Docker).
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Etapa 1: Build
+# Stage 1: Build
 # -----------------------------------------------------------------------------
 FROM eclipse-temurin:21-jdk AS build
 
@@ -27,7 +26,7 @@ COPY src src
 RUN ./gradlew bootJar --no-daemon
 
 # -----------------------------------------------------------------------------
-# Etapa 2: Runtime (imagen final con solo JRE)
+# Stage 2: Runtime (imagen final con solo JRE)
 # -----------------------------------------------------------------------------
 FROM eclipse-temurin:21-jre
 

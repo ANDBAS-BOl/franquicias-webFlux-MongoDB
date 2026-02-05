@@ -7,7 +7,7 @@ plugins {
 
 group = 'com.seti'
 version = '0.0.1-SNAPSHOT'
-description = 'Test Seti Nqui'
+description = 'API Franquicias Spring WebFlux'
 
 java {
 	toolchain {
@@ -41,7 +41,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-// Reporte de cobertura (Etapa 4: cobertura > 60%, deseable >= 80%)
+// Reporte de cobertura JaCoCo 
 jacoco {
 	toolVersion = '0.8.11'
 }
