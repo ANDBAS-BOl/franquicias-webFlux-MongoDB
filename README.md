@@ -59,6 +59,115 @@ La API quedará disponible en **http://localhost:8080**.
 
 ---
 
+## Uso del Dockerfile (Etapa 5 – Docker)
+
+La aplicación se puede construir y ejecutar con Docker mediante un **Dockerfile multi-stage**: una etapa compila con Gradle y Java 21, y la etapa final usa solo JRE 21 para ejecutar el JAR.
+
+### Requisitos
+
+- **Docker** instalado y en ejecución.
+- **MongoDB** accesible (en tu máquina, en otro contenedor o en un servicio en la nube). La aplicación necesita la URI de MongoDB en tiempo de ejecución.
+
+### Construir la imagen
+
+Desde la raíz del proyecto (`API-franchises-webFlux-MongoDB/`):
+
+```bash
+docker build -t api-franquicias:latest .
+```
+
+- `-t api-franquicias:latest` asigna nombre y etiqueta a la imagen.
+- El punto (`.`) indica el contexto de build (directorio actual).
+
+### Ejecutar el contenedor
+
+**Si MongoDB está en tu máquina (localhost):**
+
+En Linux/Mac, usar `host.docker.internal` para que el contenedor acceda al host:
+
+```bash
+docker run -d -p 8080:8080 \
+  -e SPRING_MONGODB_URI=mongodb://admin:password123@host.docker.internal:27017/franquicias?authSource=admin \
+  --name api-franquicias \
+  api-franquicias:latest
+```
+
+En Windows con Docker Desktop también se puede usar `host.docker.internal`.
+
+**Si MongoDB está en otro contenedor o en una red Docker:**
+
+Pasa la URI correcta (hostname del servicio o IP):
+
+```bash
+docker run -d -p 8080:8080 \
+  -e SPRING_MONGODB_URI=mongodb://admin:password123@<host-mongo>:27017/franquicias?authSource=admin \
+  --name api-franquicias \
+  api-franquicias:latest
+```
+
+Sustituye `<host-mongo>` por el nombre del contenedor/servicio de MongoDB o por su IP.
+
+### Comandos útiles
+
+| Acción | Comando |
+|--------|--------|
+| Ver logs | `docker logs -f api-franquicias` |
+| Parar | `docker stop api-franquicias` |
+| Eliminar contenedor | `docker rm api-franquicias` |
+| Eliminar imagen | `docker rmi api-franquicias:latest` |
+
+La API quedará disponible en **http://localhost:8080** (Swagger: http://localhost:8080/swagger-ui.html).
+
+### Levantar todo con Docker Compose
+
+Para levantar la **API y MongoDB** juntos (ideal para desarrollo o verificación local):
+
+Desde la raíz del proyecto (`API-franchises-webFlux-MongoDB/`):
+
+```bash
+docker compose up -d --build
+```
+
+- `--build` construye la imagen de la API si no existe o si hubo cambios.
+- `-d` ejecuta en segundo plano.
+
+**Verificar que estén en ejecución:**
+
+```bash
+docker compose ps
+```
+
+**Ver logs de la API:**
+
+```bash
+docker compose logs -f api
+```
+
+**Probar la API:**
+
+- Base: http://localhost:8080  
+- Swagger UI: http://localhost:8080/swagger-ui.html  
+
+Por ejemplo, crear una franquicia:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/franchises -H "Content-Type: application/json" -d "{\"name\": \"Franquicia Test\"}"
+```
+
+**Detener y eliminar contenedores:**
+
+```bash
+docker compose down
+```
+
+Para eliminar también volúmenes (datos de MongoDB):
+
+```bash
+docker compose down -v
+```
+
+---
+
 ## Contratos de la API (endpoints)
 
 Base path: **`/api/v1/franchises`**
@@ -119,5 +228,8 @@ Base path: **`/api/v1/franchises`**
 
 ## Flujo de trabajo con Git
 
-- Rama principal: `main`.
+- **Rama principal:** `main`.
+- **Desarrollo:** Se crea una rama desde `main` (por ejemplo `develop` o `feature/nombre`) para el desarrollo.
+- **Trabajo en la rama:** Se realizan los cambios, commits y `push` a esa rama (no a `main` directamente).
+- **Integración a main:** Cuando el desarrollo está listo y funciona, desde GitHub se abre un **Pull Request (PR)** desde la rama de desarrollo hacia `main`. Tras la revisión (y opcionalmente CI), se hace merge a `main`.
 - Repositorio público en GitHub para entrega de la prueba.

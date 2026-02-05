@@ -1,0 +1,19 @@
+# Build y artefactos locales (se generan dentro del contenedor)
+build/
+
+# Git e IDE
+.git
+.gitignore
+.gitattributes
+.idea
+*.iml
+.vscode
+
+# Tests (no necesarios para generar el JAR en la imagen)
+src/test
+
+# Logs y reportes
+*.log
+
+# Windows (el build en Docker es Linux)
+gradlew.bat
